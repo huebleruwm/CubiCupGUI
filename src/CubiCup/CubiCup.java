@@ -72,6 +72,7 @@ public class CubiCup {
 
         drawBase(size);
         addTurnCounters();
+        highlightTurn();
 
         //System.out.println( "P1  P2" );
         //System.out.println( pieces[BLUE] + "  " + pieces[GREEN] );
@@ -129,7 +130,15 @@ public class CubiCup {
         spotHover = label;
     }
 
-    private void takeTurn( int x, int y, int z ) {
+    public boolean turnIsBlue() {
+        return turn == BLUE;
+    }
+
+    public boolean turnIsGreen() {
+        return turn == GREEN;
+    }
+
+    public void takeTurn( int x, int y, int z ) {
 
         //System.out.println(x + " , " + y + " , " + z);
 
@@ -148,6 +157,11 @@ public class CubiCup {
             return;
         }
 
+        //cant play if spot is occupied
+        if( board[x][y][z] != EMPTY ) {
+            return;
+        }
+
         if( turn == BLUE) {
             turn = GREEN;
             pieces[BLUE]--;
@@ -163,6 +177,7 @@ public class CubiCup {
         }
 
         updateCounters();
+        highlightTurn();
         checkForEnd();
 
         for( BufferedWriter engineOutput : engineOutputs ) {
@@ -201,10 +216,10 @@ public class CubiCup {
         } else {
 
             //check for win by empty pieces
-            if (pieces[BLUE] == 0) {
+            if (pieces[BLUE] == 0 && turn == BLUE) {
                 //player 1 ran out of pieces, player 2 wins
                 setWinner(GREEN);
-            } else if (pieces[GREEN] == 0) {
+            } else if (pieces[GREEN] == 0 && turn == GREEN) {
                 //player 2 ran out of pieces, player 1 wins
                 setWinner(BLUE);
             }
@@ -218,9 +233,11 @@ public class CubiCup {
         if( winner == BLUE ) {
             rectB.setStroke(Color.GOLD);
             rectB.setStrokeWidth(5);
+            rectG.setStrokeWidth(0);
         } else {
             rectG.setStroke(Color.GOLD);
             rectG.setStrokeWidth(5);
+            rectB.setStrokeWidth(0);
         }
 
         gameOver = true;
@@ -235,6 +252,20 @@ public class CubiCup {
         rectG.setStrokeWidth(5);
 
         gameOver = true;
+    }
+
+    private void highlightTurn() {
+
+        if( turn == BLUE ) {
+            rectB.setStroke(Color.RED);
+            rectB.setStrokeWidth(5);
+            rectG.setStrokeWidth(0);
+        } else {
+            rectG.setStroke(Color.RED);
+            rectG.setStrokeWidth(5);
+            rectB.setStrokeWidth(0);
+        }
+
     }
 
     private void fill( int x, int y, int z, int lastTurnAdded ) {

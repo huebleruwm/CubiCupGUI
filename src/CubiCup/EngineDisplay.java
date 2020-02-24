@@ -3,8 +3,7 @@ package CubiCup;
 import javafx.application.Platform;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
-import javafx.scene.control.Button;
-import javafx.scene.control.TitledPane;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -34,7 +33,16 @@ public class EngineDisplay {
     private Button close = new Button("X");
     private Button reset = new Button("Reset");
 
+    private ToggleGroup playGroup = new ToggleGroup();
+    private ToggleButton playBlue = new ToggleButton("Blue");
+    private ToggleButton playGreen = new ToggleButton("Green");
+    private ToggleButton playBoth = new ToggleButton("Both");
+
+    private Slider timeSlider = new Slider(1,10,5);
+
     private String[] cmd;
+
+    int[] bestMove = {0,0,0};
 
     public EngineDisplay() throws Exception {
 
@@ -51,8 +59,21 @@ public class EngineDisplay {
 
         reset.setOnAction( event -> reset() );
 
-        buttonBox.getChildren().addAll(close,reset);
-        engineOutput.getChildren().add( buttonBox );
+        playBlue.setToggleGroup(playGroup);
+        playGreen.setToggleGroup(playGroup);
+        playBoth.setToggleGroup(playGroup);
+
+        reset.focusTraversableProperty().setValue(false);
+        playBlue.focusTraversableProperty().setValue(false);
+        playGreen.focusTraversableProperty().setValue(false);
+        playBoth.focusTraversableProperty().setValue(false);
+
+        buttonBox.getChildren().addAll(close,reset,playBlue,playGreen,playBoth);
+
+        timeSlider.setShowTickMarks(true);
+        timeSlider.setShowTickLabels(true);
+
+        engineOutput.getChildren().addAll( buttonBox, timeSlider );
 
         String engineFileName = engineFile.getName();
 
@@ -94,6 +115,22 @@ public class EngineDisplay {
         return reset;
     }
 
+    public boolean playingBlue() {
+        return playBlue.isSelected();
+    }
+
+    public boolean playingGreen() {
+        return playGreen.isSelected();
+    }
+
+    public boolean playingBoth() {
+        return playBoth.isSelected();
+    }
+
+    public int getThinkTime_ms() {
+        return (int)(timeSlider.getValue() * 1000);
+    }
+
     public void kill() {
         process.destroy();
     }
@@ -110,7 +147,7 @@ public class EngineDisplay {
             values.clear();
 
             engineOutput.getChildren().clear();
-            engineOutput.getChildren().add( buttonBox );
+            engineOutput.getChildren().addAll( buttonBox, timeSlider );
 
             reader = new BufferedReader( new InputStreamReader( process.getInputStream() ) );
             output = new BufferedWriter( new OutputStreamWriter( process.getOutputStream() ) );
@@ -150,7 +187,7 @@ public class EngineDisplay {
                                     Text newText = new Text( lineSplit[1] + ": " );
                                     values.add( newText );
                                     Platform.runLater(() -> {
-                                        engineOutput.getChildren().add(engineOutput.getChildren().size()-1,newText);
+                                        engineOutput.getChildren().add(engineOutput.getChildren().size()-2,newText);
                                     });
                                 }
 
@@ -161,6 +198,13 @@ public class EngineDisplay {
                                             values.get(counter).setText(valueNames.get(counter) + ": " + lineSplit[1]);
                                         });
                                     }
+                                }
+
+                                if( lineSplit[0].equals("Best Move") && lineSplit.length > 1 ) {
+                                    String[] coords = lineSplit[1].split(",");
+                                    bestMove[0] = Integer.parseInt(coords[0].replaceAll("[ (]",""));
+                                    bestMove[1] = Integer.parseInt(coords[1].replace(" ",""));
+                                    bestMove[2] = Integer.parseInt(coords[2].replaceAll("[ )]",""));
                                 }
                             }
                         }
