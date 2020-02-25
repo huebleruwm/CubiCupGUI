@@ -5,6 +5,7 @@
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
@@ -29,6 +30,20 @@
             <MenuItem mnemonicParsing="false" text="Redo" />
           </items>
         </Menu>
+            <Menu mnemonicParsing="false" text="Lighting">
+               <items>
+                  <MenuItem mnemonicParsing="false" text="Point">
+                     <graphic>
+                        <Slider fx:id="pointLightSlider" blockIncrement="0.05" max="1.0" value="0.6" />
+                     </graphic>
+                  </MenuItem>
+                  <MenuItem mnemonicParsing="false" text="Ambient">
+                     <graphic>
+                        <Slider fx:id="ambientLightSlider" blockIncrement="0.05" max="1.0" value="0.3" />
+                     </graphic>
+                  </MenuItem>
+               </items>
+            </Menu>
       </menus>
     </MenuBar>
       <SplitPane dividerPositions="0.7427616926503341" VBox.vgrow="ALWAYS">

@@ -138,6 +138,10 @@ public class CubiCup {
         return turn == GREEN;
     }
 
+    public GameDisplay display() {
+        return display;
+    }
+
     public void takeTurn( int x, int y, int z ) {
 
         //System.out.println(x + " , " + y + " , " + z);

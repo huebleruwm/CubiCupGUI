@@ -6,29 +6,24 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
-
 import java.io.BufferedWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Optional;
-import java.util.TimerTask;
 
 public class Controller {
 
-    @FXML
-    private Pane gamePane;
+    @FXML private Pane gamePane;
+    @FXML private VBox sidePane;
+    @FXML private Label leftLabel;
+    @FXML private Slider pointLightSlider;
+    @FXML private Slider ambientLightSlider;
+
     private CubiCup game;
-
-    @FXML
-    private VBox sidePane;
-
-    @FXML
-    private Label leftLabel;
 
     private ArrayList<BufferedWriter> engineOutputs = new ArrayList<>();
     private  ArrayList<Process> engineProcesses = new ArrayList<>();
@@ -38,13 +33,14 @@ public class Controller {
     private Stage primaryStage;
 
     private EngineDisplay mainEngine;
-    private int enginePlayDelay_ms = 10000;
 
     public void initialize() {
 
         startNewGame();
 
         initSidePanel();
+
+        initLightSliders();
 
     }
 
@@ -199,6 +195,15 @@ public class Controller {
 
     public void exit() {
         Platform.exit();
+    }
+
+    private void initLightSliders() {
+
+        pointLightSlider.valueProperty().addListener( (observableValue, oldValue, newValue)
+                -> game.display().setPointBrightness((double)newValue) );
+
+        ambientLightSlider.valueProperty().addListener( (observableValue, oldValue, newValue)
+                -> game.display().setAmbientBrightness((double) newValue) );
     }
 
     Service<Void> mainEnginePlay = new Service<Void>() {

@@ -34,9 +34,13 @@ public class GameDisplay {
 
     SubScene displayScene;
 
+    private PointLight pointLight;
+    private AmbientLight ambientLight;
+
     public GameDisplay( int gameSize ) {
 
         buildCamera(gameSize);
+        buildLighting();
         //buildAxes();
 
         displayScene = new SubScene( root, 500, 500, true, SceneAntialiasing.BALANCED);
@@ -72,6 +76,34 @@ public class GameDisplay {
         cameraXform.rx.setAngle(-87.6);
         cameraXform.ry.setAngle(210.8);
         cameraXform.rz.setAngle(-13.8);
+
+
+    }
+
+    private void buildLighting() {
+
+        double pointBrightneess = 0.6;
+        double ambientBrightneess = 0.3;
+
+        pointLight = new PointLight();
+        ambientLight = new AmbientLight();
+
+        pointLight.setTranslateX(-100);
+        pointLight.setTranslateY(-100);
+        pointLight.setTranslateZ(-100);
+
+        setPointBrightness(pointBrightneess);
+        setAmbientBrightness(ambientBrightneess);
+
+        root.getChildren().addAll(pointLight,ambientLight);
+    }
+
+    public void setPointBrightness( double brightness ) {
+        pointLight.setColor(Color.color(brightness,brightness,brightness));
+    }
+
+    public void setAmbientBrightness( double brightness ) {
+        ambientLight.setColor(Color.color(brightness,brightness,brightness));
     }
 
     private void buildAxes() {
