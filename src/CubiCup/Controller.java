@@ -154,6 +154,7 @@ public class Controller {
                     sizeInput.setContentText("Pick something more than 1 ...");
                 } else {
                     this.gameSize = gameSize;
+                    gamePane.getChildren().clear();
                     game = new CubiCup(gamePane,gameSize);
                     game.setEngineOutputs(engineOutputs);
                     game.setSpotHoverLabel(leftLabel);
@@ -178,6 +179,7 @@ public class Controller {
     }
 
     public void reset() {
+        gamePane.getChildren().clear();
         game = new CubiCup(gamePane,gameSize);
         game.setEngineOutputs(engineOutputs);
         game.setSpotHoverLabel(leftLabel);
