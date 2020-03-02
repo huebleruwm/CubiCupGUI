@@ -5,8 +5,8 @@
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
-<?import javafx.scene.control.Slider?>
-<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
@@ -15,12 +15,11 @@
 
 <VBox minHeight="500.0" minWidth="500.0" prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="CubiCup.Controller">
   <children>
-    <MenuBar VBox.vgrow="NEVER">
+    <MenuBar fx:id="topMenu" VBox.vgrow="NEVER">
       <menus>
         <Menu mnemonicParsing="false" text="File">
           <items>
-            <MenuItem mnemonicParsing="false" onAction="#startNewGame" onMenuValidation="#reset" text="New Game" />
-                  <MenuItem mnemonicParsing="false" onAction="#reset" text="Reset" />
+            <MenuItem mnemonicParsing="false" onAction="#startNewGameTab" text="New Game Tab" />
             <MenuItem mnemonicParsing="false" onAction="#exit" text="Quit" />
           </items>
         </Menu>
@@ -30,28 +29,13 @@
             <MenuItem mnemonicParsing="false" text="Redo" />
           </items>
         </Menu>
-            <Menu mnemonicParsing="false" text="Lighting">
-               <items>
-                  <MenuItem mnemonicParsing="false" text="Point">
-                     <graphic>
-                        <Slider fx:id="pointLightSlider" blockIncrement="0.05" max="1.0" value="0.6" />
-                     </graphic>
-                  </MenuItem>
-                  <MenuItem mnemonicParsing="false" text="Ambient">
-                     <graphic>
-                        <Slider fx:id="ambientLightSlider" blockIncrement="0.05" max="1.0" value="0.3" />
-                     </graphic>
-                  </MenuItem>
-               </items>
-            </Menu>
       </menus>
     </MenuBar>
-      <SplitPane dividerPositions="0.7427616926503341" VBox.vgrow="ALWAYS">
-         <items>
-            <Pane fx:id="gamePane" prefHeight="549.0" prefWidth="639.0" />
-            <VBox fx:id="sidePane" />
-         </items>
-      </SplitPane>
+      <AnchorPane prefHeight="599.0" prefWidth="900.0" VBox.vgrow="ALWAYS">
+         <children>
+            <TabPane fx:id="games" prefHeight="549.0" prefWidth="900.0" tabClosingPolicy="ALL_TABS" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+         </children>
+      </AnchorPane>
     <HBox id="HBox" fx:id="sideAccordion" alignment="CENTER_LEFT" spacing="5.0" VBox.vgrow="NEVER">
       <children>
             <Label fx:id="leftLabel" />

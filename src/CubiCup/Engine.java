@@ -3,10 +3,11 @@ package CubiCup;
 import javafx.application.Platform;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Slider;
+import javafx.scene.control.TitledPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -14,37 +15,31 @@ import javafx.stage.Stage;
 import java.io.*;
 import java.util.ArrayList;
 
-public class EngineDisplay {
+public abstract class Engine {
 
     private TitledPane dropDownName = new TitledPane();
-
     private VBox engineOutput = new VBox();
-
-    private ArrayList<String> valueNames = new ArrayList<String>();
-    private ArrayList<Text> values = new ArrayList<Text>();
-
-    private Process process;
-    private BufferedReader reader;
-    private BufferedWriter output;
 
     private File engineFile;
 
-    private HBox buttonBox = new HBox();
+    private ArrayList<String> valueNames = new ArrayList<>();
+    private ArrayList<Text> values = new ArrayList<>();
+
+    private Process process;
+    private BufferedReader reader;
+    private BufferedWriter writer;
+    private String[] cmd;
+    private Slider timeSlider = new Slider(1,10,5);
+
+    protected HBox buttonBox = new HBox();
     private Button close = new Button("X");
     private Button reset = new Button("Reset");
 
-    private ToggleGroup playGroup = new ToggleGroup();
-    private ToggleButton playBlue = new ToggleButton("Blue");
-    private ToggleButton playGreen = new ToggleButton("Green");
-    private ToggleButton playBoth = new ToggleButton("Both");
+    abstract public boolean isEngineTurn( int turn );
 
-    private Slider timeSlider = new Slider(1,10,5);
+    String bestMove;
 
-    private String[] cmd;
-
-    int[] bestMove = {0,0,0};
-
-    public EngineDisplay() throws Exception {
+    public void initialize() throws Exception {
 
         FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showOpenDialog(new Stage());
@@ -59,16 +54,9 @@ public class EngineDisplay {
 
         reset.setOnAction( event -> reset() );
 
-        playBlue.setToggleGroup(playGroup);
-        playGreen.setToggleGroup(playGroup);
-        playBoth.setToggleGroup(playGroup);
-
         reset.focusTraversableProperty().setValue(false);
-        playBlue.focusTraversableProperty().setValue(false);
-        playGreen.focusTraversableProperty().setValue(false);
-        playBoth.focusTraversableProperty().setValue(false);
 
-        buttonBox.getChildren().addAll(close,reset,playBlue,playGreen,playBoth);
+        buttonBox.getChildren().addAll(close,reset);
 
         timeSlider.setShowTickMarks(true);
         timeSlider.setShowTickLabels(true);
@@ -90,21 +78,10 @@ public class EngineDisplay {
         process = Runtime.getRuntime().exec(cmd);
 
         reader = new BufferedReader( new InputStreamReader( process.getInputStream() ) );
-        output = new BufferedWriter( new OutputStreamWriter( process.getOutputStream() ) );
+        writer = new BufferedWriter( new OutputStreamWriter( process.getOutputStream() ) );
 
         runMain.start();
-    }
 
-    public TitledPane getDropDown() {
-        return dropDownName;
-    }
-
-    public BufferedWriter getOutputStream() {
-        return output;
-    }
-
-    public Process getEngineProcess() {
-        return process;
     }
 
     public Button closeButton() {
@@ -115,16 +92,8 @@ public class EngineDisplay {
         return reset;
     }
 
-    public boolean playingBlue() {
-        return playBlue.isSelected();
-    }
-
-    public boolean playingGreen() {
-        return playGreen.isSelected();
-    }
-
-    public boolean playingBoth() {
-        return playBoth.isSelected();
+    public TitledPane getDropDown() {
+        return dropDownName;
     }
 
     public int getThinkTime_ms() {
@@ -133,6 +102,20 @@ public class EngineDisplay {
 
     public void kill() {
         process.destroy();
+    }
+
+    public void output( String output ) {
+        try {
+            writer.write(output);
+            writer.newLine();
+            writer.flush();
+        } catch( Exception e ) {
+            e.printStackTrace();
+        }
+    }
+
+    public String getBestMove() {
+        return bestMove;
     }
 
     public void reset() {
@@ -150,7 +133,7 @@ public class EngineDisplay {
             engineOutput.getChildren().addAll( buttonBox, timeSlider );
 
             reader = new BufferedReader( new InputStreamReader( process.getInputStream() ) );
-            output = new BufferedWriter( new OutputStreamWriter( process.getOutputStream() ) );
+            writer = new BufferedWriter( new OutputStreamWriter( process.getOutputStream() ) );
 
             runMain.restart();
 
@@ -179,9 +162,6 @@ public class EngineDisplay {
 
                                 String[] lineSplit = line.split(":");
 
-                                //System.out.println(lineSplit[0]);
-                                //System.out.println(lineSplit[1]);
-
                                 if( lineSplit[0].equals("subscribe") ) {
                                     valueNames.add( lineSplit[1] );
                                     Text newText = new Text( lineSplit[1] + ": " );
@@ -201,15 +181,12 @@ public class EngineDisplay {
                                 }
 
                                 if( lineSplit[0].equals("Best Move") && lineSplit.length > 1 ) {
-                                    String[] coords = lineSplit[1].split(",");
-                                    bestMove[0] = Integer.parseInt(coords[0].replaceAll("[ (]",""));
-                                    bestMove[1] = Integer.parseInt(coords[1].replace(" ",""));
-                                    bestMove[2] = Integer.parseInt(coords[2].replaceAll("[ )]",""));
+                                    bestMove = lineSplit[1];
                                 }
                             }
                         }
                     } catch (IOException e) {
-                        //e.printStackTrace();
+                        e.printStackTrace();
                         System.out.println("Thread error/close interfacing with engine.");
                     }
 

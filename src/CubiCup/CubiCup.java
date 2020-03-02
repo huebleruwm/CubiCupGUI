@@ -1,60 +1,92 @@
 package CubiCup;
 
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Font;
-import javafx.scene.text.Text;
+import java.util.Optional;
 
-import java.io.BufferedWriter;
-import java.util.ArrayList;
-
-public class CubiCup {
+public class CubiCup extends TurnBasedGame {
 
     private final int EMPTY = -2;
     private final int BASE = -1;
     private final int BLUE = 0;
     private final int GREEN = 1;
 
-    int size;
-    int turn = BLUE;
-    int[][][] board;
-    int[] pieces = new int[2];
+    private int BoxSideLength = 20;
 
-    Pane gameDisplay;
-    private GameDisplay display;
+    private int size;
+    private int[][][] board;
+    private int[] pieces = new int[2];
 
-    Text blueCounter;
-    Text greenCounter;
-    int counterFont = 35;
+    private CubiCupDisplay display;
 
-    Rectangle rectB;
-    Rectangle rectG;
+    public CubiCup( Pane gamePane ) {
 
-    int BoxSideLength = 20;
+        setGameDisplay(gamePane);
 
-    Boolean gameOver = false;
+        startNewGame();
 
-    ArrayList<BufferedWriter> engineOutputs;
+        setupMenuEntries();
+    }
 
-    Label spotHover = new Label();
+    //=============================================
+    //                  Setup
+    //=============================================
 
-    public CubiCup(Pane gamePane, int size) {
+    public void startNewGame() {
 
-       this.size = size;
-       this.gameDisplay = gamePane;
+        Optional<String> result;
 
-       int totalPieces = size * (size+1) * (size+2) / 6;
+        TextInputDialog sizeInput = new TextInputDialog("7");
+        sizeInput.setContentText("Enter board size");
+        sizeInput.setHeaderText("");
+        sizeInput.setTitle("CubiCup Size Picker");
 
-       if( totalPieces%2 == 0 ) {
-           pieces[BLUE] = totalPieces / 2;
-           pieces[GREEN] = totalPieces / 2;
-       } else {
-           pieces[BLUE] = (totalPieces+1) / 2;
-           pieces[GREEN] = (totalPieces-1) / 2;
-       }
+        while(true) {
+
+            // get size of board
+            result = sizeInput.showAndWait();
+
+            // ignore/close if nothing entered
+            if( !result.isPresent() ) {
+                break;
+            }
+
+            try {
+                //parse int from user input
+                this.size = Integer.parseInt(result.get());
+
+                if( this.size <= 1 ) {
+                    sizeInput = new TextInputDialog("7");
+                    sizeInput.setHeaderText("");
+                    sizeInput.setTitle("CubiCup Size Picker");
+                    sizeInput.setContentText("Pick something more than 1 ...");
+                } else {
+                    gameDisplay.getChildren().clear();
+                    initialize();
+
+                    break;
+                }
+            } catch (Exception e) {
+                sizeInput = new TextInputDialog("7");
+                sizeInput.setHeaderText("");
+                sizeInput.setTitle("CubiCup Size Picker");
+                sizeInput.setContentText("You want a board size of '" + result.get() + "'?");
+            }
+        }
+    }
+
+    public void initialize() {
+
+        int totalPieces = size * (size+1) * (size+2) / 6;
+
+        if( totalPieces%2 == 0 ) {
+            pieces[BLUE] = totalPieces / 2;
+            pieces[GREEN] = totalPieces / 2;
+        } else {
+            pieces[BLUE] = (totalPieces+1) / 2;
+            pieces[GREEN] = (totalPieces-1) / 2;
+        }
 
         board = new int[size+1][size+1][size+1];
 
@@ -66,85 +98,123 @@ public class CubiCup {
             }
         }
 
-        display = new GameDisplay( size );
+        turn = BLUE;
 
-        display.addGameToPane( gamePane );
+        display = new CubiCupDisplay( size );
+
+        display.addGameToPane( gameDisplay );
 
         drawBase(size);
-        addTurnCounters();
-        highlightTurn();
+        display.addTurnCounters();
+        display.updateTurnCounters( pieces[BLUE], pieces[GREEN] );
+        display.highlightTurn(turn);
+        updateEngines();
+        isReady = true;
+    }
 
-        //System.out.println( "P1  P2" );
-        //System.out.println( pieces[BLUE] + "  " + pieces[GREEN] );
+    public void setupMenuEntries() {
+        Menu lightingMenu = new Menu("Lighting");
+
+        Slider pointSlider = new Slider(0,1,0.6);
+        Slider ambientSlider = new Slider(0,1,0.3);
+
+        CustomMenuItem pointLight = new CustomMenuItem(pointSlider);
+        CustomMenuItem ambientLight = new CustomMenuItem(ambientSlider);
+
+        pointLight.setText("Point");
+        ambientLight.setText("Ambient");
+
+        pointSlider.valueProperty().addListener( (observableValue, oldValue, newValue)
+                -> display.setPointBrightness((double)newValue) );
+
+        ambientSlider.valueProperty().addListener( (observableValue, oldValue, newValue)
+                -> display.setAmbientBrightness((double) newValue) );
+
+        lightingMenu.getItems().addAll(pointLight, ambientLight);
+
+        Menu[] returnMenus = { lightingMenu };
+        menuEntries = returnMenus;
+    }
+
+    //=============================================
+    //             Helper Functions
+    //=============================================
+
+    private int[] parseMoveString( String move ) {
+        int[] xyz = {0,0,0};
+
+        String[] coords = move.split(",");
+        xyz[0] = Integer.parseInt(coords[0].replaceAll("[ (]",""));
+        xyz[1] = Integer.parseInt(coords[1].replace(" ",""));
+        xyz[2] = Integer.parseInt(coords[2].replaceAll("[ )]",""));
+
+        return xyz;
+    }
+
+    private String encodeMove( int x, int y, int z ) {
+        return "(" + x + ", " + y + ", " + z + ")";
+    }
+
+    private void addCube( int x, int y, int z, Color color ) {
+
+        SideBox box = new SideBox(BoxSideLength*x, BoxSideLength*y, BoxSideLength*z, BoxSideLength, color);
+        box.addToGroup(display.getRoot());
+
+        box.boxXU.setOnMousePressed( event -> this.takeTurn(encodeMove(x-1, y, z )));
+        box.boxXU.hoverProperty().addListener( event -> updateHoverLabel(encodeMove(x-1,y,z) ));
+
+        box.boxYU.setOnMousePressed( event -> this.takeTurn(encodeMove(x, y-1, z )));
+        box.boxYU.hoverProperty().addListener( event -> updateHoverLabel(encodeMove(x,y-1,z) ));
+
+        box.boxZU.setOnMousePressed( event -> this.takeTurn(encodeMove(x, y, z-1 )));
+        box.boxZU.hoverProperty().addListener( event -> updateHoverLabel(encodeMove(x,y,z-1) ));
+    }
+
+    private void drawBase( int  size ) {
+
+        for( int x = 0; x <= size; x++ ) {
+            for( int y = size-x, z = 0; y >= 0; y--,z++ ) {
+                //System.out.println(x + " , " + y + " , " + z);
+                addCube(x,y,z,Color.TAN);
+                board[x][y][z] = BASE;
+            }
+        }
 
     }
 
-    private void addTurnCounters() {
+    public void updateHoverLabel( String move ) {
 
-        rectB = new Rectangle();
-        rectB.setWidth(150);
-        rectB.setHeight(150);
-        rectB.setFill(Color.BLUE);
-        rectB.setStroke(Color.DARKBLUE);
+        int[] xyz = parseMoveString(move);
+        int x = xyz[0];
+        int y = xyz[1];
+        int z = xyz[2];
 
-        rectG = new Rectangle();
-        rectG.setWidth(150);
-        rectG.setHeight(150);
-        rectG.setFill(Color.GREEN);
-        rectG.setStroke(Color.DARKGREEN);
-
-        StackPane blue = new StackPane();
-        blueCounter = new Text(""+pieces[BLUE]);
-        blueCounter.setFont(new Font(counterFont));
-        blue.getChildren().addAll( rectB, blueCounter );
-
-        StackPane green = new StackPane();
-        greenCounter = new Text(""+pieces[GREEN]);
-        greenCounter.setFont(new Font(counterFont));
-        green.getChildren().addAll( rectG, greenCounter );
-
-        gameDisplay.getChildren().addAll( blue, green );
-
-        blue.setTranslateY(gameDisplay.getHeight() * 0.1);
-        green.setTranslateY(gameDisplay.getHeight() * 0.1);
-        blue.setTranslateX(gameDisplay.getWidth() * 0.2-75);
-        green.setTranslateX(gameDisplay.getWidth() * 0.8-75);
-
-        gameDisplay.heightProperty().addListener((obs, oldVal, newVal) -> {
-            blue.setTranslateY((double)newVal * 0.1);
-            green.setTranslateY((double)newVal * 0.1);
-        });
-
-        gameDisplay.widthProperty().addListener((obs, oldVal, newVal) -> {
-            blue.setTranslateX((double)newVal * 0.2-75);
-            green.setTranslateX((double)newVal * 0.8-75);
-        });
+        if( x < 0 || y < 0 || z < 0 ) {
+            hoverLabel.setText("");
+        } else {
+            hoverLabel.setText("Mouse Over: " + x + "," +  y + "," + z);
+        }
     }
 
-    private void updateCounters() {
-        blueCounter.setText(""+pieces[BLUE]);
-        greenCounter.setText(""+pieces[GREEN]);
+    public void updateEngines() {
+        //TODO implement update logic, assumes update is new game
+        for( Engine engine : engines ) {
+            engine.output("newGame:" + size);
+        }
     }
 
-    public void setSpotHoverLabel( Label label ) {
-        spotHover = label;
-    }
+    //=============================================
+    //                  Rules
+    //=============================================
 
-    public boolean turnIsBlue() {
-        return turn == BLUE;
-    }
-
-    public boolean turnIsGreen() {
-        return turn == GREEN;
-    }
-
-    public GameDisplay display() {
-        return display;
-    }
-
-    public void takeTurn( int x, int y, int z ) {
+    public void takeTurn( String move ) {
 
         //System.out.println(x + " , " + y + " , " + z);
+
+        int[] xyz = parseMoveString(move);
+        int x = xyz[0];
+        int y = xyz[1];
+        int z = xyz[2];
 
         //cant play if game is over
         if( gameOver ) {
@@ -180,26 +250,10 @@ public class CubiCup {
             fill( x, y, z,GREEN );
         }
 
-        updateCounters();
-        highlightTurn();
+        display.updateTurnCounters( pieces[BLUE], pieces[GREEN] );
+        display.highlightTurn(turn);
         checkForEnd();
-
-        for( BufferedWriter engineOutput : engineOutputs ) {
-            try {
-                engineOutput.write("move:" + x + "," + y + "," + z);
-                engineOutput.newLine();
-                engineOutput.flush();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        //System.out.println( "P1  P2" );
-        //System.out.println( pieces[BLUE] + "  " + pieces[GREEN] );
-    }
-
-    public void setEngineOutputs( ArrayList<BufferedWriter> outputs ) {
-        engineOutputs = outputs;
+        sendMoveToEngines("move:" + x + "," + y + "," + z);
     }
 
     private void checkForEnd() {
@@ -208,13 +262,16 @@ public class CubiCup {
             //someone reached top
             if( board[1][0][0] == board[0][1][0] && board[1][0][0] == board[0][0][1] && board[0][0][0] != board[1][0][0] ) {
                 //this is a tie
-                setTie();
+                display.setTie();
+                gameOver = true;
             } else {
                 //this is a win
                 if( board[0][0][0] == BLUE ) {
-                    setWinner(BLUE);
+                    display.setWinner(BLUE);
+                    gameOver = true;
                 } else {
-                    setWinner(GREEN);
+                    display.setWinner(GREEN);
+                    gameOver = true;
                 }
             }
         } else {
@@ -222,54 +279,14 @@ public class CubiCup {
             //check for win by empty pieces
             if (pieces[BLUE] == 0 && turn == BLUE) {
                 //player 1 ran out of pieces, player 2 wins
-                setWinner(GREEN);
+                display.setWinner(GREEN);
+                gameOver = true;
             } else if (pieces[GREEN] == 0 && turn == GREEN) {
                 //player 2 ran out of pieces, player 1 wins
-                setWinner(BLUE);
+                display.setWinner(BLUE);
+                gameOver = true;
             }
-
         }
-
-    }
-
-    private void setWinner( int winner ) {
-
-        if( winner == BLUE ) {
-            rectB.setStroke(Color.GOLD);
-            rectB.setStrokeWidth(5);
-            rectG.setStrokeWidth(0);
-        } else {
-            rectG.setStroke(Color.GOLD);
-            rectG.setStrokeWidth(5);
-            rectB.setStrokeWidth(0);
-        }
-
-        gameOver = true;
-    }
-
-    private void setTie() {
-
-        rectB.setStroke(Color.SILVER);
-        rectB.setStrokeWidth(5);
-
-        rectG.setStroke(Color.SILVER);
-        rectG.setStrokeWidth(5);
-
-        gameOver = true;
-    }
-
-    private void highlightTurn() {
-
-        if( turn == BLUE ) {
-            rectB.setStroke(Color.RED);
-            rectB.setStrokeWidth(5);
-            rectG.setStrokeWidth(0);
-        } else {
-            rectG.setStroke(Color.RED);
-            rectG.setStrokeWidth(5);
-            rectB.setStrokeWidth(0);
-        }
-
     }
 
     private void fill( int x, int y, int z, int lastTurnAdded ) {
@@ -323,43 +340,5 @@ public class CubiCup {
                 }
             }
         }
-
     }
-
-    private void addCube( int x, int y, int z, Color color ) {
-
-        SideBox box = new SideBox(BoxSideLength*x, BoxSideLength*y, BoxSideLength*z, BoxSideLength, color);
-        box.addToGroup(display.getRoot());
-
-        box.boxXU.setOnMousePressed( event -> this.takeTurn(x-1, y, z ));
-        box.boxXU.hoverProperty().addListener( event -> updateLabel(x-1,y,z) );
-
-        box.boxYU.setOnMousePressed( event -> this.takeTurn(x, y-1, z ));
-        box.boxYU.hoverProperty().addListener( event -> updateLabel(x,y-1,z) );
-
-        box.boxZU.setOnMousePressed( event -> this.takeTurn(x, y, z-1 ));
-        box.boxZU.hoverProperty().addListener( event -> updateLabel(x,y,z-1) );
-    }
-
-    private void drawBase( int  size ) {
-
-        for( int x = 0; x <= size; x++ ) {
-            for( int y = size-x, z = 0; y >= 0; y--,z++ ) {
-                //System.out.println(x + " , " + y + " , " + z);
-                addCube(x,y,z,Color.TAN);
-                board[x][y][z] = BASE;
-            }
-        }
-
-    }
-
-    private void updateLabel( int x, int y, int z ) {
-
-        if( x < 0 || y < 0 || z < 0 ) {
-            spotHover.setText("");
-        } else {
-            spotHover.setText("Mouse Over: " + x + "," +  y + "," + z);
-        }
-    }
-
 }

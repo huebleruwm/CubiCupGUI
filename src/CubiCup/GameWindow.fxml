@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+
+
+<SplitPane dividerPositions="0.7427616926503341" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="CubiCup.GameController">
+   <items>
+      <Pane fx:id="gamePane" prefHeight="549.0" prefWidth="639.0" />
+      <VBox fx:id="sidePane" />
+   </items>
+</SplitPane>

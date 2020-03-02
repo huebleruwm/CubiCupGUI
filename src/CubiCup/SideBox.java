@@ -59,12 +59,16 @@ public class SideBox {
 
         final PhongMaterial mat = new PhongMaterial();
         if( color == Color.TAN ) {
+            //mat.setDiffuseColor(Color.TAN);
             mat.setDiffuseMap(new Image(getClass().getResourceAsStream("wood.jpg")));
         } else if( color == Color.GREEN ) {
+            //mat.setDiffuseColor(Color.GREEN);
             mat.setDiffuseMap(new Image(getClass().getResourceAsStream("green_wood.jpg")));
         } else if( color == Color.BLUE ) {
+            //mat.setDiffuseColor(Color.BLUE);
             mat.setDiffuseMap(new Image(getClass().getResourceAsStream("blue_wood.jpg")));
         } else {
+            //mat.setDiffuseColor(color);
             mat.setDiffuseColor(color);
         }
 

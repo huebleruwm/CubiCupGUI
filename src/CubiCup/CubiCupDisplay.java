@@ -4,8 +4,12 @@ import javafx.scene.Group;
 import javafx.scene.SubScene;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.*;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.scene.paint.PhongMaterial;
@@ -13,13 +17,27 @@ import javafx.scene.shape.Box;
 import java.lang.Math;
 
 
-public class GameDisplay {
+public class CubiCupDisplay {
 
-    final Group root = new Group();
+    private Pane gameDisplay;
+    private SubScene displayScene;
+    private final Group root = new Group();
+
+    private Text blueCounter;
+    private Text greenCounter;
+    private int counterFont = 35;
+
+    private Rectangle rectB;
+    private Rectangle rectG;
 
     final PerspectiveCamera camera = new PerspectiveCamera(true);
 
     Xform cameraXform = new Xform();
+
+    private final int EMPTY = -2;
+    private final int BASE = -1;
+    private final int BLUE = 0;
+    private final int GREEN = 1;
 
     private static final double ROTATION_SPEED = .1;
 
@@ -32,12 +50,10 @@ public class GameDisplay {
 
     private static final double AXIS_LENGTH = 250.0;
 
-    SubScene displayScene;
-
     private PointLight pointLight;
     private AmbientLight ambientLight;
 
-    public GameDisplay( int gameSize ) {
+    public CubiCupDisplay(int gameSize ) {
 
         buildCamera(gameSize);
         buildLighting();
@@ -56,6 +72,8 @@ public class GameDisplay {
     }
 
     public void addGameToPane( Pane pane ) {
+
+        gameDisplay = pane;
 
         pane.getChildren().add( displayScene );
 
@@ -76,7 +94,6 @@ public class GameDisplay {
         cameraXform.rx.setAngle(-87.6);
         cameraXform.ry.setAngle(210.8);
         cameraXform.rz.setAngle(-13.8);
-
 
     }
 
@@ -187,6 +204,93 @@ public class GameDisplay {
             cameraXform.getTransforms().add( new Scale( zoomFactor, zoomFactor, zoomFactor ) );
 
         });
+    }
+
+    public void updateTurnCounters( int blue, int green ) {
+        blueCounter.setText(""+blue);
+        greenCounter.setText(""+green);
+    }
+
+    public void addTurnCounters() {
+
+        rectB = new Rectangle();
+        rectB.setWidth(150);
+        rectB.setHeight(150);
+        rectB.setFill(Color.BLUE);
+        rectB.setStroke(Color.DARKBLUE);
+
+        rectG = new Rectangle();
+        rectG.setWidth(150);
+        rectG.setHeight(150);
+        rectG.setFill(Color.GREEN);
+        rectG.setStroke(Color.DARKGREEN);
+
+        StackPane blue = new StackPane();
+        blueCounter = new Text("" + 0);
+        blueCounter.setFont(new Font(counterFont));
+        blue.getChildren().addAll( rectB, blueCounter );
+
+        StackPane green = new StackPane();
+        greenCounter = new Text(""+ 0 );
+        greenCounter.setFont(new Font(counterFont));
+        green.getChildren().addAll( rectG, greenCounter );
+
+        gameDisplay.getChildren().addAll( blue, green );
+
+        blue.setTranslateY(gameDisplay.getHeight() * 0.1);
+        green.setTranslateY(gameDisplay.getHeight() * 0.1);
+        blue.setTranslateX(gameDisplay.getWidth() * 0.2-75);
+        green.setTranslateX(gameDisplay.getWidth() * 0.8-75);
+
+        gameDisplay.heightProperty().addListener((obs, oldVal, newVal) -> {
+            blue.setTranslateY((double)newVal * 0.1);
+            green.setTranslateY((double)newVal * 0.1);
+        });
+
+        gameDisplay.widthProperty().addListener((obs, oldVal, newVal) -> {
+            blue.setTranslateX((double)newVal * 0.2-75);
+            green.setTranslateX((double)newVal * 0.8-75);
+        });
+    }
+
+    public void setWinner( int winner ) {
+
+        if( winner == BLUE ) {
+            rectB.setStroke(Color.GOLD);
+            rectB.setStrokeWidth(5);
+            rectG.setStrokeWidth(0);
+        } else {
+            rectG.setStroke(Color.GOLD);
+            rectG.setStrokeWidth(5);
+            rectB.setStrokeWidth(0);
+        }
+    }
+
+    public void setTie() {
+
+        rectB.setStroke(Color.SILVER);
+        rectB.setStrokeWidth(5);
+
+        rectG.setStroke(Color.SILVER);
+        rectG.setStrokeWidth(5);
+    }
+
+    public void highlightTurn( int turn ) {
+
+        if( turn == BLUE ) {
+            rectB.setStroke(Color.RED);
+            rectB.setStrokeWidth(5);
+            rectG.setStrokeWidth(0);
+        } else {
+            rectG.setStroke(Color.RED);
+            rectG.setStrokeWidth(5);
+            rectB.setStrokeWidth(0);
+        }
+
+    }
+
+    public Pane getDisplay() {
+        return gameDisplay;
     }
 
     public static class Xform extends Group {
