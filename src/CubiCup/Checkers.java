@@ -39,6 +39,10 @@ public class Checkers extends TurnBasedGame {
         initialize();
     }
 
+    public Engine createEngine() {
+        return null;
+    }
+
     public void takeTurn(String move) {
 
         int[] xyToxy = parseMove(move);

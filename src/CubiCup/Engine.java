@@ -169,24 +169,29 @@ public abstract class Engine {
                                     Platform.runLater(() -> {
                                         engineOutput.getChildren().add(engineOutput.getChildren().size()-2,newText);
                                     });
-                                }
+                                } else {
 
-                                for (int i = 0; i < valueNames.size(); i++) {
-                                    int counter = i;
-                                    if (lineSplit[0].equals(valueNames.get(i))) {
-                                        Platform.runLater(() -> {
-                                            values.get(counter).setText(valueNames.get(counter) + ": " + lineSplit[1]);
-                                        });
+                                    for (int i = 0; i < valueNames.size(); i++) {
+                                        int counter = i;
+                                        if (lineSplit[0].equals(valueNames.get(i))) {
+                                            Platform.runLater(() -> {
+                                                values.get(counter).setText(valueNames.get(counter) + ": " + lineSplit[1]);
+                                            });
+                                        }
                                     }
                                 }
 
                                 if( lineSplit[0].equals("Best Move") && lineSplit.length > 1 ) {
                                     bestMove = lineSplit[1];
                                 }
+
+                                if( lineSplit[0].equals("Error") ) {
+                                    System.out.println(line);
+                                }
                             }
                         }
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        //e.printStackTrace();
                         System.out.println("Thread error/close interfacing with engine.");
                     }
 

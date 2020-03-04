@@ -110,6 +110,7 @@ public class CubiCup extends TurnBasedGame {
         display.highlightTurn(turn);
         updateEngines();
         isReady = true;
+        gameOver = false;
     }
 
     public void setupMenuEntries() {
@@ -134,6 +135,15 @@ public class CubiCup extends TurnBasedGame {
 
         Menu[] returnMenus = { lightingMenu };
         menuEntries = returnMenus;
+    }
+
+    public Engine createEngine() {
+        try {
+            return new CubiCupEngine();
+        } catch( Exception e ) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     //=============================================

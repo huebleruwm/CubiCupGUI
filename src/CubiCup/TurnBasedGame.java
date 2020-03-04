@@ -33,6 +33,8 @@ public abstract class TurnBasedGame {
 
     abstract public void setupMenuEntries();
 
+    abstract public Engine createEngine();
+
     public void sendMoveToEngines( String move ) {
         for( Engine engine : engines ) {
             engine.output(move);
@@ -43,12 +45,24 @@ public abstract class TurnBasedGame {
         engines.add(eng);
     }
 
+    public void removeEngine( Engine eng ) {
+        engines.remove(eng);
+    }
+
+    public ArrayList<Engine> engines() {
+        return engines;
+    }
+
     public int getTurn() {
         return turn;
     }
 
     public boolean isReady() {
         return isReady;
+    }
+
+    public boolean isGameOver() {
+        return gameOver;
     }
 
     public void setGameDisplay( Pane gameDisplay ) {
