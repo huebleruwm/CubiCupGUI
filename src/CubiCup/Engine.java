@@ -114,6 +114,28 @@ public abstract class Engine {
         }
     }
 
+    public void countDownToPlay( TurnBasedGame game ) throws Exception {
+
+        long start = System.currentTimeMillis();
+        long now = System.currentTimeMillis();
+
+        try {
+            while( isEngineTurn(game.getTurn()) && (now-start) < getThinkTime_ms() ) {
+                double timeToMove =  (double)((int)(getThinkTime_ms() - (now-start)) / 100) / 10.0;
+                Platform.runLater( () -> dropDownName.setText(engineFile.getName() + " -- " + timeToMove)  );
+                now = System.currentTimeMillis();
+                Thread.sleep(100);
+            }
+        } catch( Exception e ) {
+            //e.printStackTrace();
+            Platform.runLater( () -> dropDownName.setText(engineFile.getName())  );
+            throw new Exception();
+        }
+
+        Platform.runLater( () -> dropDownName.setText(engineFile.getName())  );
+
+    }
+
     public String getBestMove() {
         return bestMove;
     }

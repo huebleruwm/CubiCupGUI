@@ -181,7 +181,6 @@ public class GameController {
 
                         try {
 
-
                             while( !game.isReady() || game.isGameOver() ) {
                                 Thread.sleep(100);
                             }
@@ -190,8 +189,9 @@ public class GameController {
 
                                 // If it is engines turn
                                 if( engine.isEngineTurn(game.getTurn()) ) {
-                                    // Wait think time
-                                    Thread.sleep(engine.getThinkTime_ms());
+
+                                    // Let the engine count down to when it will play
+                                    engine.countDownToPlay( game );
 
                                     // If it is still engine's turn after thinking, play the best move
                                     if( engine.isEngineTurn(game.getTurn()) ) {
@@ -199,9 +199,7 @@ public class GameController {
                                         int turnSave = game.getTurn();
 
                                         //play move
-                                        Platform.runLater(() -> {
-                                            game.takeTurn(engine.getBestMove());
-                                        });
+                                        Platform.runLater(() -> game.takeTurn(engine.getBestMove()));
 
                                         while( turnSave == game.getTurn() ) {
                                             // Wait until turn for game changes
@@ -216,8 +214,9 @@ public class GameController {
                             Thread.sleep(100);
 
                         } catch( Exception e ) {
-                            e.printStackTrace();
+                            //e.printStackTrace();
                             System.out.println( "enginePlay interrupted" );
+                            return null;
                         }
                     }
                 }
